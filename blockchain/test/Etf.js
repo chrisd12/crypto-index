@@ -6,7 +6,6 @@ describe("ETF factory", function () {
   beforeEach(async function () {
     etfFactoryContract = await ethers.getContractFactory("EtfFactory")
     etfFactory = await etfFactoryContract.deploy()
-    await etfFactory.pause()
   })
 
   it("Total weight is 100%", async function () {

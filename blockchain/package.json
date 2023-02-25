@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@chainlink/contracts": "^0.6.1",
     "@ethersproject/providers": "^5.4.7",
     "@nomicfoundation/hardhat-chai-matchers": "^1.0.0",
     "@nomicfoundation/hardhat-network-helpers": "^1.0.0",
