@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 contract ETFToken is ERC20, ERC20Burnable, Ownable {
     constructor(string memory _name, string memory _ticker) ERC20(_name, _ticker) {}
 
-    function mint(address _to, uint256 _amount) public onlyOwner {
+    function mint(address _to, uint256 _amount) public {
         _mint(_to, _amount);
     }
 }

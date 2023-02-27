@@ -18,12 +18,15 @@ contract EtfFactory is Ownable, Pausable {
     ETFToken public token;
     ETFVault public vault;
 
+    uint256 erc20Decimals = 18;
+
     constructor() {
         _pause();
         token = new ETFToken("ETF Token", "ETF");
         vault = new ETFVault();
-        assets = [0x694AA1769357215DE4FAC081bf1f309aDC325306];
+        assets = [0x9c3C9283D3e44854697Cd22D3Faa240Cfb032889];
         weights = [1000000];
+        oracleMapping[0x9c3C9283D3e44854697Cd22D3Faa240Cfb032889] = 0xd0D5e3DB44DE05E9F294BB0a3bEEaF030DE24Ada;
     }
 
     function updateWeights(address[] memory _assets, address[] memory _oracleContracts, uint32[] memory _newWeights) public onlyOwner whenPaused {
@@ -35,6 +38,17 @@ contract EtfFactory is Ownable, Pausable {
         require(totalWeight == 1000000, "Total weight must be 1000000");
         assets = _assets;
         weights = _newWeights;
+        for (uint i = 0; i < _assets.length; i++) {
+            oracleMapping[_assets[i]] = _oracleContracts[i];
+        }
+    }
+
+    function getVaultAddress() public view returns (address) {
+        return address(vault);
+    }
+
+    function getTokenAddress() public view returns (address) {
+        return address(token);
     }
 
     function getAssets() public view returns (address[] memory) {
@@ -57,15 +71,19 @@ contract EtfFactory is Ownable, Pausable {
         _unpause();
     }
 
-    function mint(address _to, uint256 _amount) internal onlyOwner whenNotPaused {
+    function mintETFToken(address _to, uint256 _amount) internal onlyOwner {
         token.mint(_to, _amount);
     }
 
     function getAssetsValue() public view returns (int256[] memory) {
         uint256[] memory balances = vault.getVaultBalance(assets);
         int256[] memory assetsValue;
+        uint80 decimals;
+        int256 price;
+
         for (uint i = 0; i < assets.length; i++) {
-            assetsValue[i] = int(balances[i]) * getAssetPrice(assets[i]);
+            (decimals, price) = getAssetPrice(assets[i]);
+            assetsValue[i] = int((balances[i]) * uint(price) * 10 ** (erc20Decimals - decimals)) / (10 ** 18);
         }
         return assetsValue;
     }
@@ -85,18 +103,29 @@ contract EtfFactory is Ownable, Pausable {
     }
 
     function getTokenBackedValue() public view returns (int256) {
-        return getVaultValue() / int(getTokenSupply());
+        int256 tokenBackedValue;
+        if (getTokenSupply() == 0) {
+            tokenBackedValue = 1;
+        } else {
+            tokenBackedValue = getVaultValue() / int256(getTokenSupply());
+        }
+        return tokenBackedValue;
     }
 
-    function deposit(address tokenAddress, uint256 amount) public {
-        int256 price = getAssetPrice(tokenAddress);
-        int256 valueDeposited = price * int256(amount);
-        vault.deposit(tokenAddress, amount);
+    function fund(address tokenAddress, uint256 amount) public {
+        (uint80 decimals, int256 price) = getAssetPrice(tokenAddress);
+        int256 valueDeposited = int(amount * uint(price) * 10 ** (erc20Decimals - decimals)) / (10 ** 18);
+        vault.deposit(msg.sender, tokenAddress, amount);
+        int256 ratio = valueDeposited / 1;
+        uint256 tokenToMint = uint256(ratio) * amount;
+        mintETFToken(msg.sender, tokenToMint);
     }
 
-    function getAssetPrice(address tokenAdress) public view returns (int256) {
+    function getAssetPrice(address tokenAddress) public view returns (uint80, int256) {
         int256 price;
-        (, price, , , ) = AggregatorV3Interface(tokenAdress).latestRoundData();
-        return price;
+        uint80 decimals;
+        (, price, , , ) = AggregatorV3Interface(oracleMapping[tokenAddress]).latestRoundData();
+        decimals = AggregatorV3Interface(oracleMapping[tokenAddress]).decimals();
+        return (decimals, price);
     }
 }

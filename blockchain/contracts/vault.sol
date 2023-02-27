@@ -9,14 +9,13 @@ contract ETFVault is Ownable {
 
     constructor() {}
 
-    function deposit(address tokenAddress, uint256 amount) public onlyOwner {
-        require(IERC20(tokenAddress).approve(address(this), amount), "Approve failed");
-        IERC20(tokenAddress).transferFrom(msg.sender, address(this), amount);
+    function deposit(address from, address tokenAddress, uint256 amount) public {
+        require(IERC20(tokenAddress).transferFrom(from, address(this), amount), "Transfer failed");
         emit Deposit(tokenAddress, amount);
     }
 
-    function withdraw(address tokenAddress, uint256 amount) public onlyOwner {
-        IERC20(tokenAddress).transfer(msg.sender, amount);
+    function withdraw(address tokenAddress, uint256 amount) public {
+        IERC20(tokenAddress).transfer(tx.origin, amount);
     }
 
     function getVaultBalance(address[] memory assets) public view returns (uint256[] memory) {
