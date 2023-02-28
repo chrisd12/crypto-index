@@ -9,6 +9,8 @@ import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import "./token.sol";
 import "./vault.sol";
 
+import "hardhat/console.sol";
+
 contract EtfFactory is Ownable, Pausable {
     address[] public assets;
     mapping(address => address) oracleMapping;
@@ -47,6 +49,10 @@ contract EtfFactory is Ownable, Pausable {
         return address(vault);
     }
 
+    function getOracle(address tokenContract) public view returns (address) {
+        return oracleMapping[tokenContract];
+    }
+
     function getTokenAddress() public view returns (address) {
         return address(token);
     }
@@ -77,13 +83,13 @@ contract EtfFactory is Ownable, Pausable {
 
     function getAssetsValue() public view returns (int256[] memory) {
         uint256[] memory balances = vault.getVaultBalance(assets);
-        int256[] memory assetsValue;
+        int256[] memory assetsValue = new int[](assets.length);
         uint80 decimals;
         int256 price;
 
         for (uint i = 0; i < assets.length; i++) {
             (decimals, price) = getAssetPrice(assets[i]);
-            assetsValue[i] = int((balances[i]) * uint(price) * 10 ** (erc20Decimals - decimals)) / (10 ** 18);
+            assetsValue[i] = int((balances[i] * uint(price) * 10 ** (erc20Decimals - decimals)) / (10 ** 18));
         }
         return assetsValue;
     }
@@ -91,7 +97,6 @@ contract EtfFactory is Ownable, Pausable {
     function getVaultValue() public view returns (int256) {
         int256 value;
         int256[] memory assetsValue = getAssetsValue();
-
         for (uint i = 0; i < assetsValue.length; i++) {
             value += assetsValue[i];
         }
@@ -105,9 +110,9 @@ contract EtfFactory is Ownable, Pausable {
     function getTokenBackedValue() public view returns (int256) {
         int256 tokenBackedValue;
         if (getTokenSupply() == 0) {
-            tokenBackedValue = 1;
+            tokenBackedValue = int(10 ** erc20Decimals);
         } else {
-            tokenBackedValue = getVaultValue() / int256(getTokenSupply());
+            tokenBackedValue = (int256(uint(getVaultValue()) * 10 ** erc20Decimals)) / int256(getTokenSupply());
         }
         return tokenBackedValue;
     }
@@ -115,9 +120,8 @@ contract EtfFactory is Ownable, Pausable {
     function fund(address tokenAddress, uint256 amount) public {
         (uint80 decimals, int256 price) = getAssetPrice(tokenAddress);
         int256 valueDeposited = int(amount * uint(price) * 10 ** (erc20Decimals - decimals)) / (10 ** 18);
+        uint256 tokenToMint = (uint(valueDeposited) * 10 ** erc20Decimals) / uint(getTokenBackedValue());
         vault.deposit(msg.sender, tokenAddress, amount);
-        int256 ratio = valueDeposited / 1;
-        uint256 tokenToMint = uint256(ratio) * amount;
         mintETFToken(msg.sender, tokenToMint);
     }
 

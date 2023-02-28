@@ -7,7 +7,7 @@ async function main() {
         contract: "MockV3Aggregator",
         from: deployer,
         log: true,
-        args: [8, 1200000000],
+        args: [8, 120000000],
     })
     await priceFeed.deployed()
     console.log(`Deployed contract to: ${  await etfFactory.address}`)

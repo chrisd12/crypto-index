@@ -24,13 +24,17 @@ async function main() {
   const erc20TokenAbi = ["function approve(address spender, uint256 amount) external returns (bool)",];
 
   const vaultAddress = await etfFactory.getVaultAddress();
-  const amountToApprove = ethers.utils.parseUnits("1000000000000000000000000000000", "ether");
+  const amountToApprove = ethers.utils.parseUnits("1000000000", "ether");
   
   const signer = await ethers.provider.getSigner();
   const erc20Token = new ethers.Contract(erc20TokenAddress, erc20TokenAbi, signer);
   const approveTx = await erc20Token.approve(vaultAddress, amountToApprove);
   const approveTxReceipt = await approveTx.wait();
   console.log('Successfully approved Wrapped Matic');
+
+  const fundEtf = await etfFactory.fund("0x9c3C9283D3e44854697Cd22D3Faa240Cfb032889",1000000000000000)
+
+  console.log('fundEtf');
 }
 
 main().catch((error) => {

@@ -3,6 +3,7 @@ pragma solidity ^0.8.10;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "hardhat/console.sol";
 
 contract ETFVault is Ownable {
     event Deposit(address indexed tokenAddress, uint256 amount);
@@ -19,7 +20,8 @@ contract ETFVault is Ownable {
     }
 
     function getVaultBalance(address[] memory assets) public view returns (uint256[] memory) {
-        uint256[] memory balances;
+        uint256[] memory balances = new uint[](assets.length);
+
         for (uint i = 0; i < assets.length; i++) {
             balances[i] = IERC20(assets[i]).balanceOf(address(this));
         }
