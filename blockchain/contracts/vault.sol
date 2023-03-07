@@ -7,6 +7,7 @@ import "hardhat/console.sol";
 
 contract ETFVault is Ownable {
     event Deposit(address indexed tokenAddress, uint256 amount);
+    event Withdraw(address indexed tokenAddress, uint256 amount);
 
     constructor() {}
 
@@ -16,7 +17,9 @@ contract ETFVault is Ownable {
     }
 
     function withdraw(address tokenAddress, uint256 amount) public {
+        IERC20(tokenAddress).approve(msg.sender, amount);
         IERC20(tokenAddress).transfer(tx.origin, amount);
+        emit Withdraw(tokenAddress, amount);
     }
 
     function getVaultBalance(address[] memory assets) public view returns (uint256[] memory) {

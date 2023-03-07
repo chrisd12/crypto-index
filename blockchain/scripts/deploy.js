@@ -6,7 +6,7 @@ async function main() {
   //Deploy the ETF contract
   const etfFactoryContract = await ethers.getContractFactory("EtfFactory")
   console.log("Deploying contract...")
-  const etfFactory = await etfFactoryContract.deploy({gasPrice: 2000000000})
+  const etfFactory = await etfFactoryContract.deploy({gasPrice:2000000000})
   await etfFactory.deployed()
   console.log(`Deployed contract to: ${  await etfFactory.address}`)
 
