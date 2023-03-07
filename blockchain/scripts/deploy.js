@@ -32,7 +32,7 @@ async function main() {
   const approveTxReceipt = await approveTx.wait();
   console.log('Successfully approved Wrapped Matic');
 
-  const fundEtf = await etfFactory.fund("0x9c3C9283D3e44854697Cd22D3Faa240Cfb032889",1000000000000000)
+  const fundEtf = await etfFactory.fund(["0x9c3C9283D3e44854697Cd22D3Faa240Cfb032889"],[1000000000000000])
 
   console.log('fundEtf');
 }
